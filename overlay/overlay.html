@@ -1,155 +1,228 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
 <meta charset="UTF-8">
+<title>PRO Stream Overlay</title>
 
 <style>
 
 body{
- margin:0;
- background:transparent;
- font-family:Arial, Helvetica, sans-serif;
- color:white;
- overflow:hidden;
+margin:0;
+background:transparent;
+font-family:Arial, Helvetica, sans-serif;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+color:white;
 }
 
-/* layout */
+/* glass container */
 
 .container{
- position:absolute;
- top:50%;
- left:50%;
- transform:translate(-50%,-50%);
- text-align:center;
+
+position:relative;
+
+backdrop-filter: blur(18px);
+background:rgba(0,0,0,0.35);
+
+border-radius:22px;
+
+padding:30px 50px;
+
+box-shadow:
+0 0 40px rgba(0,0,0,0.6),
+inset 0 0 20px rgba(255,255,255,0.05);
+
+text-align:center;
+
 }
+
+/* date */
+
+.date{
+font-size:28px;
+margin-bottom:25px;
+font-weight:600;
+opacity:.9;
+}
+
+/* score */
 
 .score{
- font-size:120px;
- font-weight:900;
- position:relative;
- letter-spacing:4px;
-}
 
-.label{
- font-size:40px;
- opacity:.9;
- margin-bottom:10px;
-}
+font-size:46px;
+font-weight:700;
 
-/* colors */
+margin:12px 0;
+
+position:relative;
+
+transition:all .2s ease;
+
+}
 
 .win{
- color:#00ff9d;
- text-shadow:
- 0 0 15px #00ff9d,
- 0 0 30px #00ff9d;
+color:#00ffae;
+text-shadow:0 0 15px #00ffae;
 }
 
 .lose{
- color:#ff4040;
- text-shadow:
- 0 0 15px #ff4040,
- 0 0 30px #ff4040;
+color:#ff4a4a;
+text-shadow:0 0 15px #ff4a4a;
 }
 
-/* number pop */
+/* bump */
 
 .bump{
- animation:pop .35s cubic-bezier(.2,1.5,.5,1);
+animation:bump .25s ease;
 }
 
-@keyframes pop{
-
+@keyframes bump{
 0%{transform:scale(1)}
-40%{transform:scale(1.55)}
+50%{transform:scale(1.35)}
 100%{transform:scale(1)}
-
 }
 
-/* floating number */
+/* floating */
 
 .float{
- position:absolute;
- left:50%;
- transform:translateX(-50%);
- font-size:60px;
- font-weight:900;
- pointer-events:none;
- animation:floatUp 1.2s forwards;
+
+position:absolute;
+left:50%;
+top:0;
+
+font-size:26px;
+font-weight:bold;
+
+animation:floatUp 1s ease forwards;
+
+pointer-events:none;
+
 }
 
 @keyframes floatUp{
 
 0%{
- opacity:1;
- transform:translate(-50%,0) scale(1);
-}
-
-60%{
- opacity:1;
+opacity:1;
+transform:translate(-50%,0) scale(1)
 }
 
 100%{
- opacity:0;
- transform:translate(-50%,-160px) scale(1.2);
+opacity:0;
+transform:translate(-50%,-50px) scale(1.4)
 }
 
 }
 
-/* combo animation */
+/* fire effect */
+
+.fire{
+
+position:absolute;
+bottom:-10px;
+left:50%;
+width:120px;
+height:120px;
+
+background:radial-gradient(circle,
+rgba(255,200,0,.8),
+rgba(255,0,0,.6),
+transparent);
+
+filter:blur(20px);
+
+transform:translateX(-50%);
+
+animation:fire .6s ease;
+
+pointer-events:none;
+
+}
+
+@keyframes fire{
+
+0%{
+opacity:1;
+transform:translateX(-50%) scale(.6);
+}
+
+100%{
+opacity:0;
+transform:translateX(-50%) scale(1.6);
+}
+
+}
+
+/* crack */
+
+.crack{
+
+position:absolute;
+
+width:160px;
+height:160px;
+
+background:radial-gradient(circle,
+rgba(255,255,255,.9),
+transparent);
+
+filter:blur(12px);
+
+animation:crack .5s ease;
+
+pointer-events:none;
+
+}
+
+@keyframes crack{
+
+0%{
+opacity:1;
+transform:scale(.5);
+}
+
+100%{
+opacity:0;
+transform:scale(1.8);
+}
+
+}
+
+/* combo text */
 
 .combo{
- position:absolute;
- left:50%;
- top:-100px;
- transform:translateX(-50%);
- font-size:70px;
- font-weight:bold;
- color:gold;
- text-shadow:0 0 20px gold;
- animation:comboPop 1s forwards;
+
+position:absolute;
+top:-40px;
+left:50%;
+
+font-size:24px;
+font-weight:bold;
+
+color:#ffd700;
+
+transform:translateX(-50%);
+
+animation:combo .8s ease;
+
 }
 
-@keyframes comboPop{
+@keyframes combo{
 
 0%{
- opacity:0;
- transform:translate(-50%,40px) scale(.5);
+opacity:0;
+transform:translate(-50%,20px);
 }
 
-50%{
- opacity:1;
- transform:translate(-50%,0) scale(1.4);
+40%{
+opacity:1;
+transform:translate(-50%,0);
 }
 
 100%{
- opacity:0;
- transform:translate(-50%,-40px) scale(1);
-}
-
-}
-
-/* particles */
-
-.particle{
- position:absolute;
- width:8px;
- height:8px;
- border-radius:50%;
- opacity:.9;
- animation:particle 1s forwards;
-}
-
-@keyframes particle{
-
-0%{
- transform:translate(0,0);
- opacity:1;
-}
-
-100%{
- transform:translate(var(--x),var(--y));
- opacity:0;
+opacity:0;
+transform:translate(-50%,-20px);
 }
 
 }
@@ -161,166 +234,199 @@ body{
 
 <div class="container">
 
-<div class="label">WIN</div>
+<div id="date" class="date">📅 ...</div>
+
 <div class="score win">
-<span id="win">0</span>
+Win <span id="win">0</span>
 </div>
 
-<div style="height:40px"></div>
-
-<div class="label">LOSE</div>
 <div class="score lose">
-<span id="lose">0</span>
+Lose <span id="lose">0</span>
 </div>
 
 </div>
+
 
 <script>
 
-let ws
-let lastWin=0
-let lastLose=0
+let lastWin = 0
+let lastLose = 0
+let combo = 0
+let comboTimer = null
 
 function bump(id){
 
- const el=document.getElementById(id)
+const el=document.getElementById(id)
 
- el.classList.remove("bump")
- void el.offsetWidth
- el.classList.add("bump")
-
-}
-
-function float(type,val){
-
- const parent=document.querySelector("."+type)
-
- const el=document.createElement("div")
-
- el.className="float "+type
- el.innerText=val>0? "+"+val : val
-
- parent.appendChild(el)
-
- setTimeout(()=>el.remove(),1200)
+el.classList.remove("bump")
+void el.offsetWidth
+el.classList.add("bump")
 
 }
 
-function combo(parent,val){
+function floatEffect(parent,value){
 
- if(Math.abs(val)<3) return
+const el=document.createElement("div")
 
- const el=document.createElement("div")
+el.className="float"
+el.innerText=value
 
- el.className="combo"
- el.innerText="COMBO "+Math.abs(val)
+parent.appendChild(el)
 
- parent.appendChild(el)
-
- setTimeout(()=>el.remove(),1000)
+setTimeout(()=>el.remove(),1000)
 
 }
 
-function particles(parent,color){
+/* fire effect */
 
- for(let i=0;i<10;i++){
+function fireEffect(parent){
 
-  const p=document.createElement("div")
+const fire=document.createElement("div")
 
-  p.className="particle"
+fire.className="fire"
 
-  p.style.background=color
+parent.appendChild(fire)
 
-  const x=(Math.random()*200-100)+"px"
-  const y=(Math.random()*-200)+"px"
-
-  p.style.setProperty("--x",x)
-  p.style.setProperty("--y",y)
-
-  parent.appendChild(p)
-
-  setTimeout(()=>p.remove(),1000)
-
- }
+setTimeout(()=>fire.remove(),600)
 
 }
 
-async function sync(){
+/* lose crack */
 
- const state=await fetch("/score").then(r=>r.json())
+function crackEffect(parent){
 
- document.getElementById("win").innerText=state.win
- document.getElementById("lose").innerText=state.lose
+const crack=document.createElement("div")
 
- lastWin=state.win
- lastLose=state.lose
+crack.className="crack"
+
+crack.style.left="50%"
+crack.style.top="20px"
+crack.style.transform="translateX(-50%)"
+
+parent.appendChild(crack)
+
+setTimeout(()=>crack.remove(),500)
 
 }
+
+/* combo win */
+
+function comboEffect(parent){
+
+combo++
+
+clearTimeout(comboTimer)
+
+if(combo>=2){
+
+const el=document.createElement("div")
+
+el.className="combo"
+
+el.innerText="COMBO x"+combo
+
+parent.appendChild(el)
+
+setTimeout(()=>el.remove(),800)
+
+}
+
+comboTimer=setTimeout(()=>{
+combo=0
+},3000)
+
+}
+
+/* connect */
 
 async function connect(){
 
- const config=await fetch("/config").then(r=>r.json())
+const config = await fetch("/config").then(r=>r.json())
 
- ws=new WebSocket(config.ws)
+const ws = new WebSocket(config.ws)
 
- ws.onmessage=(event)=>{
+ws.onmessage=(event)=>{
 
-  const data=JSON.parse(event.data)
+const data=JSON.parse(event.data)
 
-  if(data.win!==lastWin){
+document.getElementById("date").innerText="📅 "+data.date
 
-   const diff=data.win-lastWin
+const winEl=document.getElementById("win")
+const loseEl=document.getElementById("lose")
 
-   const el=document.getElementById("win")
+/* win */
 
-   el.innerText=data.win
+if(data.win!==lastWin){
 
-   bump("win")
+let diff=data.win-lastWin
 
-   float("win",diff)
+winEl.innerText=data.win
 
-   combo(el.parentElement,diff)
+bump("win")
 
-   particles(el.parentElement,"#00ff9d")
+const parent=winEl.parentElement
 
-   lastWin=data.win
-  }
+if(diff>0){
 
-  if(data.lose!==lastLose){
-
-   const diff=data.lose-lastLose
-
-   const el=document.getElementById("lose")
-
-   el.innerText=data.lose
-
-   bump("lose")
-
-   float("lose",diff)
-
-   combo(el.parentElement,diff)
-
-   particles(el.parentElement,"#ff4040")
-
-   lastLose=data.lose
-  }
-
- }
-
- ws.onclose=()=>{
-  setTimeout(()=>{
-   sync()
-   connect()
-  },3000)
- }
-
- ws.onerror=()=>{
-  ws.close()
- }
+floatEffect(parent,"+1")
+fireEffect(parent)
+comboEffect(parent)
 
 }
 
-sync()
+if(diff<0){
+
+floatEffect(parent,"-1")
+
+}
+
+lastWin=data.win
+
+}
+
+/* lose */
+
+if(data.lose!==lastLose){
+
+let diff=data.lose-lastLose
+
+loseEl.innerText=data.lose
+
+bump("lose")
+
+const parent=loseEl.parentElement
+
+if(diff>0){
+
+floatEffect(parent,"+1")
+crackEffect(parent)
+
+}
+
+if(diff<0){
+
+floatEffect(parent,"-1")
+
+}
+
+lastLose=data.lose
+
+}
+
+}
+
+/* reconnect */
+
+ws.onclose=()=>{
+
+console.log("reconnect...")
+
+setTimeout(connect,3000)
+
+}
+
+}
+
 connect()
 
 </script>
