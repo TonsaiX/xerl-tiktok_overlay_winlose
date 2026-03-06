@@ -8,62 +8,148 @@
 body{
  margin:0;
  background:transparent;
- font-family:Arial;
+ font-family:Arial, Helvetica, sans-serif;
  color:white;
+ overflow:hidden;
 }
 
+/* layout */
+
 .container{
- display:flex;
- flex-direction:column;
- align-items:center;
- justify-content:center;
- height:100vh;
+ position:absolute;
+ top:50%;
+ left:50%;
+ transform:translate(-50%,-50%);
+ text-align:center;
 }
 
 .score{
- font-size:90px;
- font-weight:bold;
+ font-size:120px;
+ font-weight:900;
  position:relative;
+ letter-spacing:4px;
 }
+
+.label{
+ font-size:40px;
+ opacity:.9;
+ margin-bottom:10px;
+}
+
+/* colors */
 
 .win{
  color:#00ff9d;
+ text-shadow:
+ 0 0 15px #00ff9d,
+ 0 0 30px #00ff9d;
 }
 
 .lose{
  color:#ff4040;
+ text-shadow:
+ 0 0 15px #ff4040,
+ 0 0 30px #ff4040;
 }
+
+/* number pop */
 
 .bump{
- animation:bump .4s;
+ animation:pop .35s cubic-bezier(.2,1.5,.5,1);
 }
 
-@keyframes bump{
+@keyframes pop{
 
 0%{transform:scale(1)}
-40%{transform:scale(1.4)}
+40%{transform:scale(1.55)}
 100%{transform:scale(1)}
 
 }
+
+/* floating number */
 
 .float{
  position:absolute;
  left:50%;
  transform:translateX(-50%);
- font-size:50px;
- animation:float 1s forwards;
+ font-size:60px;
+ font-weight:900;
+ pointer-events:none;
+ animation:floatUp 1.2s forwards;
 }
 
-@keyframes float{
+@keyframes floatUp{
 
 0%{
  opacity:1;
- transform:translate(-50%,0)
+ transform:translate(-50%,0) scale(1);
+}
+
+60%{
+ opacity:1;
 }
 
 100%{
  opacity:0;
- transform:translate(-50%,-120px)
+ transform:translate(-50%,-160px) scale(1.2);
+}
+
+}
+
+/* combo animation */
+
+.combo{
+ position:absolute;
+ left:50%;
+ top:-100px;
+ transform:translateX(-50%);
+ font-size:70px;
+ font-weight:bold;
+ color:gold;
+ text-shadow:0 0 20px gold;
+ animation:comboPop 1s forwards;
+}
+
+@keyframes comboPop{
+
+0%{
+ opacity:0;
+ transform:translate(-50%,40px) scale(.5);
+}
+
+50%{
+ opacity:1;
+ transform:translate(-50%,0) scale(1.4);
+}
+
+100%{
+ opacity:0;
+ transform:translate(-50%,-40px) scale(1);
+}
+
+}
+
+/* particles */
+
+.particle{
+ position:absolute;
+ width:8px;
+ height:8px;
+ border-radius:50%;
+ opacity:.9;
+ animation:particle 1s forwards;
+}
+
+@keyframes particle{
+
+0%{
+ transform:translate(0,0);
+ opacity:1;
+}
+
+100%{
+ transform:translate(var(--x),var(--y));
+ opacity:0;
 }
 
 }
@@ -75,12 +161,16 @@ body{
 
 <div class="container">
 
+<div class="label">WIN</div>
 <div class="score win">
-WIN <span id="win">0</span>
+<span id="win">0</span>
 </div>
 
+<div style="height:40px"></div>
+
+<div class="label">LOSE</div>
 <div class="score lose">
-LOSE <span id="lose">0</span>
+<span id="lose">0</span>
 </div>
 
 </div>
@@ -108,12 +198,50 @@ function float(type,val){
  const el=document.createElement("div")
 
  el.className="float "+type
-
  el.innerText=val>0? "+"+val : val
 
  parent.appendChild(el)
 
+ setTimeout(()=>el.remove(),1200)
+
+}
+
+function combo(parent,val){
+
+ if(Math.abs(val)<3) return
+
+ const el=document.createElement("div")
+
+ el.className="combo"
+ el.innerText="COMBO "+Math.abs(val)
+
+ parent.appendChild(el)
+
  setTimeout(()=>el.remove(),1000)
+
+}
+
+function particles(parent,color){
+
+ for(let i=0;i<10;i++){
+
+  const p=document.createElement("div")
+
+  p.className="particle"
+
+  p.style.background=color
+
+  const x=(Math.random()*200-100)+"px"
+  const y=(Math.random()*-200)+"px"
+
+  p.style.setProperty("--x",x)
+  p.style.setProperty("--y",y)
+
+  parent.appendChild(p)
+
+  setTimeout(()=>p.remove(),1000)
+
+ }
 
 }
 
@@ -135,10 +263,6 @@ async function connect(){
 
  ws=new WebSocket(config.ws)
 
- ws.onopen=()=>{
-  console.log("ws connected")
- }
-
  ws.onmessage=(event)=>{
 
   const data=JSON.parse(event.data)
@@ -147,10 +271,17 @@ async function connect(){
 
    const diff=data.win-lastWin
 
-   document.getElementById("win").innerText=data.win
+   const el=document.getElementById("win")
+
+   el.innerText=data.win
 
    bump("win")
+
    float("win",diff)
+
+   combo(el.parentElement,diff)
+
+   particles(el.parentElement,"#00ff9d")
 
    lastWin=data.win
   }
@@ -159,10 +290,17 @@ async function connect(){
 
    const diff=data.lose-lastLose
 
-   document.getElementById("lose").innerText=data.lose
+   const el=document.getElementById("lose")
+
+   el.innerText=data.lose
 
    bump("lose")
+
    float("lose",diff)
+
+   combo(el.parentElement,diff)
+
+   particles(el.parentElement,"#ff4040")
 
    lastLose=data.lose
   }
@@ -170,7 +308,6 @@ async function connect(){
  }
 
  ws.onclose=()=>{
-  console.log("reconnect...")
   setTimeout(()=>{
    sync()
    connect()
