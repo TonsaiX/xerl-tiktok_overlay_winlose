@@ -11,11 +11,14 @@ app.use(express.static("overlay"))
 
 const PORT = process.env.PORT || 3000
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
  console.log("Server running on", PORT)
 })
 
-const wss = new WebSocket.Server({ server })
+const wss = new WebSocket.Server({
+ server,
+ path: "/ws"
+})
 
 let data = { win:0, lose:0 }
 
@@ -84,7 +87,19 @@ app.get("/config",(req,res)=>{
  const wsProtocol = req.headers.host.includes("localhost") ? "ws" : "wss"
 
  res.json({
-  ws:`${wsProtocol}://${req.headers.host}`
+  ws:`${wsProtocol}://${req.headers.host}/ws`
  })
+
+})
+
+wss.on("connection",(ws)=>{
+
+ const payload = {
+  date:new Date().toLocaleDateString("th-TH"),
+  win:data.win,
+  lose:data.lose
+ }
+
+ ws.send(JSON.stringify(payload))
 
 })
