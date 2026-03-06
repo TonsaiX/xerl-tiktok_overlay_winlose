@@ -31,6 +31,7 @@ body{
  font-size:90px;
  font-weight:bold;
  margin:10px;
+ position:relative;
 }
 
 .win{
@@ -43,25 +44,51 @@ body{
  text-shadow:0 0 20px #ff4040;
 }
 
-/* animation เด้ง */
+/* เด้งตัวเลข */
 
 .bump{
- animation:scorePop 0.45s ease;
+ animation:bump 0.4s;
 }
 
-@keyframes scorePop{
+@keyframes bump{
+
+0%{transform:scale(1)}
+40%{transform:scale(1.45)}
+100%{transform:scale(1)}
+
+}
+
+/* +1 -1 floating */
+
+.float{
+ position:absolute;
+ left:50%;
+ transform:translateX(-50%);
+ font-size:50px;
+ font-weight:bold;
+ opacity:0;
+ pointer-events:none;
+ animation:floatUp 1s ease forwards;
+}
+
+.float.win{
+ color:#00ff9d;
+}
+
+.float.lose{
+ color:#ff4040;
+}
+
+@keyframes floatUp{
 
 0%{
- transform:scale(1);
-}
-
-40%{
- transform:scale(1.45);
- text-shadow:0 0 35px currentColor;
+ transform:translate(-50%,0);
+ opacity:1;
 }
 
 100%{
- transform:scale(1);
+ transform:translate(-50%,-120px);
+ opacity:0;
 }
 
 }
@@ -106,6 +133,27 @@ async function start(){
 
  }
 
+ function showFloat(type,value){
+
+  const container = document.querySelector("." + type)
+
+  const el = document.createElement("div")
+
+  el.className="float "+type
+
+  if(value>0)
+  el.innerText="+"+value
+  else
+  el.innerText=value
+
+  container.appendChild(el)
+
+  setTimeout(()=>{
+   el.remove()
+  },1000)
+
+ }
+
  ws.onmessage = (event)=>{
 
   const data = JSON.parse(event.data)
@@ -114,22 +162,32 @@ async function start(){
   const winEl = document.getElementById("win")
   const loseEl = document.getElementById("lose")
 
-  dateEl.innerText = "📅 "+data.date
+  dateEl.innerText="📅 "+data.date
 
   if(data.win !== lastWin){
 
-   winEl.innerText = data.win
+   const diff=data.win-lastWin
+
+   winEl.innerText=data.win
    bump("win")
 
-   lastWin = data.win
+   showFloat("win",diff)
+
+   lastWin=data.win
+
   }
 
   if(data.lose !== lastLose){
 
-   loseEl.innerText = data.lose
+   const diff=data.lose-lastLose
+
+   loseEl.innerText=data.lose
    bump("lose")
 
-   lastLose = data.lose
+   showFloat("lose",diff)
+
+   lastLose=data.lose
+
   }
 
  }
