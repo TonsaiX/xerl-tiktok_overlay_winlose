@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Win Lose Overlay</title>
 
 <style>
 
@@ -19,65 +18,54 @@ body{
  align-items:center;
  justify-content:center;
  height:100vh;
- text-align:center;
-}
-
-.date{
- font-size:60px;
- font-weight:bold;
- margin-bottom:30px;
 }
 
 .score{
  font-size:90px;
  font-weight:bold;
- margin:10px;
  position:relative;
 }
 
 .win{
  color:#00ff9d;
- text-shadow:0 0 20px #00ff9d;
 }
 
 .lose{
  color:#ff4040;
- text-shadow:0 0 20px #ff4040;
 }
 
-/* bump animation */
-
 .bump{
- animation:bump 0.4s;
+ animation:bump .4s;
 }
 
 @keyframes bump{
+
 0%{transform:scale(1)}
 40%{transform:scale(1.4)}
 100%{transform:scale(1)}
-}
 
-/* floating +1 */
+}
 
 .float{
  position:absolute;
  left:50%;
  transform:translateX(-50%);
  font-size:50px;
- font-weight:bold;
- opacity:0;
- animation:floatUp 1s forwards;
+ animation:float 1s forwards;
 }
 
-@keyframes floatUp{
+@keyframes float{
+
 0%{
- transform:translate(-50%,0);
  opacity:1;
+ transform:translate(-50%,0)
 }
+
 100%{
- transform:translate(-50%,-120px);
  opacity:0;
+ transform:translate(-50%,-120px)
 }
+
 }
 
 </style>
@@ -86,8 +74,6 @@ body{
 <body>
 
 <div class="container">
-
-<div id="date" class="date">📅</div>
 
 <div class="score win">
 WIN <span id="win">0</span>
@@ -115,21 +101,31 @@ function bump(id){
 
 }
 
-function showFloat(type,value){
+function float(type,val){
 
- const container=document.querySelector("."+type)
+ const parent=document.querySelector("."+type)
 
  const el=document.createElement("div")
 
  el.className="float "+type
 
- el.innerText=value>0? "+"+value : value
+ el.innerText=val>0? "+"+val : val
 
- container.appendChild(el)
+ parent.appendChild(el)
 
- setTimeout(()=>{
-  el.remove()
- },1000)
+ setTimeout(()=>el.remove(),1000)
+
+}
+
+async function sync(){
+
+ const state=await fetch("/score").then(r=>r.json())
+
+ document.getElementById("win").innerText=state.win
+ document.getElementById("lose").innerText=state.lose
+
+ lastWin=state.win
+ lastLose=state.lose
 
 }
 
@@ -139,17 +135,13 @@ async function connect(){
 
  ws=new WebSocket(config.ws)
 
- console.log("WS connecting...")
-
  ws.onopen=()=>{
-  console.log("WS connected")
+  console.log("ws connected")
  }
 
  ws.onmessage=(event)=>{
 
   const data=JSON.parse(event.data)
-
-  document.getElementById("date").innerText="📅 "+data.date
 
   if(data.win!==lastWin){
 
@@ -158,7 +150,7 @@ async function connect(){
    document.getElementById("win").innerText=data.win
 
    bump("win")
-   showFloat("win",diff)
+   float("win",diff)
 
    lastWin=data.win
   }
@@ -170,7 +162,7 @@ async function connect(){
    document.getElementById("lose").innerText=data.lose
 
    bump("lose")
-   showFloat("lose",diff)
+   float("lose",diff)
 
    lastLose=data.lose
   }
@@ -178,8 +170,11 @@ async function connect(){
  }
 
  ws.onclose=()=>{
-  console.log("WS disconnected reconnecting...")
-  setTimeout(connect,3000)
+  console.log("reconnect...")
+  setTimeout(()=>{
+   sync()
+   connect()
+  },3000)
  }
 
  ws.onerror=()=>{
@@ -188,6 +183,7 @@ async function connect(){
 
 }
 
+sync()
 connect()
 
 </script>

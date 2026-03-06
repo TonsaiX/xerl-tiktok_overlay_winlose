@@ -11,13 +11,13 @@ app.use(express.static("overlay"))
 
 const PORT = process.env.PORT || 3000
 
-const server = app.listen(PORT, "0.0.0.0", () => {
+const server = app.listen(PORT, () => {
  console.log("Server running on", PORT)
 })
 
 const wss = new WebSocket.Server({
  server,
- path: "/ws"
+ path:"/ws"
 })
 
 let data = { win:0, lose:0 }
@@ -39,12 +39,47 @@ function broadcast(){
  }
 
  wss.clients.forEach(client=>{
-  if(client.readyState === 1){
+  if(client.readyState === WebSocket.OPEN){
    client.send(JSON.stringify(payload))
   }
  })
 
 }
+
+wss.on("connection",(ws)=>{
+
+ console.log("overlay connected")
+
+ ws.send(JSON.stringify({
+  date:new Date().toLocaleDateString("th-TH"),
+  win:data.win,
+  lose:data.lose
+ }))
+
+ ws.on("pong",()=>{
+  ws.isAlive=true
+ })
+
+ ws.isAlive=true
+
+})
+
+setInterval(()=>{
+
+ wss.clients.forEach(ws=>{
+
+  if(!ws.isAlive) return ws.terminate()
+
+  ws.isAlive=false
+  ws.ping()
+
+ })
+
+},30000)
+
+app.get("/score",(req,res)=>{
+ res.json(data)
+})
 
 app.post("/win",(req,res)=>{
  data.win++
@@ -84,22 +119,10 @@ app.post("/reset",(req,res)=>{
 
 app.get("/config",(req,res)=>{
 
- const wsProtocol = req.headers.host.includes("localhost") ? "ws" : "wss"
+ const protocol=req.headers.host.includes("localhost")?"ws":"wss"
 
  res.json({
-  ws:`${wsProtocol}://${req.headers.host}/ws`
+  ws:`${protocol}://${req.headers.host}/ws`
  })
-
-})
-
-wss.on("connection",(ws)=>{
-
- const payload = {
-  date:new Date().toLocaleDateString("th-TH"),
-  win:data.win,
-  lose:data.lose
- }
-
- ws.send(JSON.stringify(payload))
 
 })
