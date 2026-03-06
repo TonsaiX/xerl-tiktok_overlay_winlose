@@ -1,0 +1,50 @@
+<script>
+
+async function start(){
+
+const config = await fetch("/config").then(r=>r.json())
+
+const ws = new WebSocket(config.ws)
+
+let lastWin = 0
+let lastLose = 0
+
+function bump(id){
+
+const el = document.getElementById(id)
+
+el.classList.remove("bump")
+void el.offsetWidth
+el.classList.add("bump")
+
+}
+
+ws.onmessage = (event)=>{
+
+const data = JSON.parse(event.data)
+
+document.getElementById("date").innerText = "📅 "+data.date
+
+if(data.win !== lastWin){
+
+document.getElementById("win").innerText = data.win
+bump("win")
+lastWin = data.win
+
+}
+
+if(data.lose !== lastLose){
+
+document.getElementById("lose").innerText = data.lose
+bump("lose")
+lastLose = data.lose
+
+}
+
+}
+
+}
+
+start()
+
+</script>
