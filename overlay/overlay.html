@@ -8,7 +8,6 @@
 
 body{
  margin:0;
- padding:0;
  background:transparent;
  font-family:Arial, Helvetica, sans-serif;
  color:white;
@@ -40,18 +39,31 @@ body{
 }
 
 .lose{
- color:#ff3b3b;
- text-shadow:0 0 20px #ff3b3b;
+ color:#ff4040;
+ text-shadow:0 0 20px #ff4040;
 }
+
+/* animation เด้ง */
 
 .bump{
- animation:bump 0.35s;
+ animation:scorePop 0.45s ease;
 }
 
-@keyframes bump{
- 0%{transform:scale(1)}
- 40%{transform:scale(1.35)}
- 100%{transform:scale(1)}
+@keyframes scorePop{
+
+0%{
+ transform:scale(1);
+}
+
+40%{
+ transform:scale(1.45);
+ text-shadow:0 0 35px currentColor;
+}
+
+100%{
+ transform:scale(1);
+}
+
 }
 
 </style>
@@ -77,67 +89,48 @@ LOSE <span id="lose">0</span>
 
 async function start(){
 
- try{
+ const config = await fetch("/config").then(r=>r.json())
 
-  const config = await fetch("/config").then(r=>r.json())
+ const ws = new WebSocket(config.ws)
 
-  const ws = new WebSocket(config.ws)
+ let lastWin = 0
+ let lastLose = 0
 
-  let lastWin = 0
-  let lastLose = 0
+ function bump(id){
 
-  function bump(id){
+  const el = document.getElementById(id)
 
-   const el = document.getElementById(id)
+  el.classList.remove("bump")
+  void el.offsetWidth
+  el.classList.add("bump")
 
-   el.classList.remove("bump")
-   void el.offsetWidth
-   el.classList.add("bump")
+ }
 
+ ws.onmessage = (event)=>{
+
+  const data = JSON.parse(event.data)
+
+  const dateEl = document.getElementById("date")
+  const winEl = document.getElementById("win")
+  const loseEl = document.getElementById("lose")
+
+  dateEl.innerText = "📅 "+data.date
+
+  if(data.win !== lastWin){
+
+   winEl.innerText = data.win
+   bump("win")
+
+   lastWin = data.win
   }
 
-  ws.onmessage = (event)=>{
+  if(data.lose !== lastLose){
 
-   const data = JSON.parse(event.data)
+   loseEl.innerText = data.lose
+   bump("lose")
 
-   const dateEl = document.getElementById("date")
-   const winEl = document.getElementById("win")
-   const loseEl = document.getElementById("lose")
-
-   if(dateEl)
-   dateEl.innerText = "📅 "+data.date
-
-   if(data.win !== lastWin){
-
-    if(winEl){
-     winEl.innerText = data.win
-     bump("win")
-    }
-
-    lastWin = data.win
-
-   }
-
-   if(data.lose !== lastLose){
-
-    if(loseEl){
-     loseEl.innerText = data.lose
-     bump("lose")
-    }
-
-    lastLose = data.lose
-
-   }
-
+   lastLose = data.lose
   }
-
-  ws.onerror = (e)=>{
-   console.log("WebSocket error",e)
-  }
-
- }catch(err){
-
-  console.log("Overlay error",err)
 
  }
 
