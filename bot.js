@@ -5,7 +5,8 @@ const {
  GatewayIntentBits,
  ActionRowBuilder,
  ButtonBuilder,
- ButtonStyle
+ ButtonStyle,
+ EmbedBuilder
 } = require("discord.js")
 
 const axios = require("axios")
@@ -21,6 +22,15 @@ client.once("ready", async ()=>{
  console.log("Discord bot ready")
 
  const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL_ID)
+
+ const embed = new EmbedBuilder()
+ .setTitle(process.env.EMBED_TITLE || "🎮 Stream Score Control")
+ .setDescription("กดปุ่มด้านล่างเพื่อเพิ่มหรือลดคะแนน")
+ .setColor("#"+(process.env.EMBED_COLOR || "00ff9d"))
+ .setThumbnail(process.env.EMBED_THUMBNAIL || null)
+ .setImage(process.env.EMBED_BANNER || null)
+ .setFooter({text:"Win / Lose Controller"})
+ .setTimestamp()
 
  const row = new ActionRowBuilder()
  .addComponents(
@@ -52,8 +62,8 @@ client.once("ready", async ()=>{
 
  )
 
- channel.send({
-  content:"🎮 Stream Score Control",
+ await channel.send({
+  embeds:[embed],
   components:[row]
  })
 
@@ -62,6 +72,8 @@ client.once("ready", async ()=>{
 client.on("interactionCreate", async interaction => {
 
  if(!interaction.isButton()) return
+
+ try{
 
  if(interaction.customId==="win_add")
  await axios.post(API+"/win")
@@ -78,7 +90,19 @@ client.on("interactionCreate", async interaction => {
  if(interaction.customId==="reset")
  await axios.post(API+"/reset")
 
- interaction.reply({content:"updated",ephemeral:true})
+ await interaction.reply({
+  content:"✅ Updated",
+  ephemeral:true
+ })
+
+ }catch(err){
+
+ await interaction.reply({
+  content:"❌ API Error",
+  ephemeral:true
+ })
+
+ }
 
 })
 
