@@ -1,50 +1,151 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Win Lose Overlay</title>
+
+<style>
+
+body{
+ margin:0;
+ padding:0;
+ background:transparent;
+ font-family:Arial, Helvetica, sans-serif;
+ color:white;
+}
+
+.container{
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ height:100vh;
+ text-align:center;
+}
+
+.date{
+ font-size:40px;
+ margin-bottom:30px;
+}
+
+.score{
+ font-size:90px;
+ font-weight:bold;
+ margin:10px;
+}
+
+.win{
+ color:#00ff9d;
+ text-shadow:0 0 20px #00ff9d;
+}
+
+.lose{
+ color:#ff3b3b;
+ text-shadow:0 0 20px #ff3b3b;
+}
+
+.bump{
+ animation:bump 0.35s;
+}
+
+@keyframes bump{
+ 0%{transform:scale(1)}
+ 40%{transform:scale(1.35)}
+ 100%{transform:scale(1)}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="date" class="date">📅</div>
+
+<div class="score win">
+WIN <span id="win">0</span>
+</div>
+
+<div class="score lose">
+LOSE <span id="lose">0</span>
+</div>
+
+</div>
+
 <script>
 
 async function start(){
 
-const config = await fetch("/config").then(r=>r.json())
+ try{
 
-const ws = new WebSocket(config.ws)
+  const config = await fetch("/config").then(r=>r.json())
 
-let lastWin = 0
-let lastLose = 0
+  const ws = new WebSocket(config.ws)
 
-function bump(id){
+  let lastWin = 0
+  let lastLose = 0
 
-const el = document.getElementById(id)
+  function bump(id){
 
-el.classList.remove("bump")
-void el.offsetWidth
-el.classList.add("bump")
+   const el = document.getElementById(id)
 
-}
+   el.classList.remove("bump")
+   void el.offsetWidth
+   el.classList.add("bump")
 
-ws.onmessage = (event)=>{
+  }
 
-const data = JSON.parse(event.data)
+  ws.onmessage = (event)=>{
 
-document.getElementById("date").innerText = "📅 "+data.date
+   const data = JSON.parse(event.data)
 
-if(data.win !== lastWin){
+   const dateEl = document.getElementById("date")
+   const winEl = document.getElementById("win")
+   const loseEl = document.getElementById("lose")
 
-document.getElementById("win").innerText = data.win
-bump("win")
-lastWin = data.win
+   if(dateEl)
+   dateEl.innerText = "📅 "+data.date
 
-}
+   if(data.win !== lastWin){
 
-if(data.lose !== lastLose){
+    if(winEl){
+     winEl.innerText = data.win
+     bump("win")
+    }
 
-document.getElementById("lose").innerText = data.lose
-bump("lose")
-lastLose = data.lose
+    lastWin = data.win
 
-}
+   }
 
-}
+   if(data.lose !== lastLose){
+
+    if(loseEl){
+     loseEl.innerText = data.lose
+     bump("lose")
+    }
+
+    lastLose = data.lose
+
+   }
+
+  }
+
+  ws.onerror = (e)=>{
+   console.log("WebSocket error",e)
+  }
+
+ }catch(err){
+
+  console.log("Overlay error",err)
+
+ }
 
 }
 
 start()
 
 </script>
+
+</body>
+</html>
