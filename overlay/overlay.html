@@ -9,7 +9,7 @@
 body{
  margin:0;
  background:transparent;
- font-family:Arial, Helvetica, sans-serif;
+ font-family:Arial;
  color:white;
 }
 
@@ -23,8 +23,7 @@ body{
 }
 
 .date{
- font-size:60px;
- font-weight:bold;
+ font-size:40px;
  margin-bottom:30px;
 }
 
@@ -45,21 +44,19 @@ body{
  text-shadow:0 0 20px #ff4040;
 }
 
-/* เด้งตัวเลข */
+/* bump animation */
 
 .bump{
  animation:bump 0.4s;
 }
 
 @keyframes bump{
-
 0%{transform:scale(1)}
-40%{transform:scale(1.45)}
+40%{transform:scale(1.4)}
 100%{transform:scale(1)}
-
 }
 
-/* +1 -1 floating */
+/* floating +1 */
 
 .float{
  position:absolute;
@@ -68,30 +65,18 @@ body{
  font-size:50px;
  font-weight:bold;
  opacity:0;
- pointer-events:none;
- animation:floatUp 1s ease forwards;
-}
-
-.float.win{
- color:#00ff9d;
-}
-
-.float.lose{
- color:#ff4040;
+ animation:floatUp 1s forwards;
 }
 
 @keyframes floatUp{
-
 0%{
  transform:translate(-50%,0);
  opacity:1;
 }
-
 100%{
  transform:translate(-50%,-120px);
  opacity:0;
 }
-
 }
 
 </style>
@@ -115,87 +100,94 @@ LOSE <span id="lose">0</span>
 
 <script>
 
-async function start(){
+let ws
+let lastWin=0
+let lastLose=0
 
- const config = await fetch("/config").then(r=>r.json())
+function bump(id){
 
- const ws = new WebSocket(config.ws)
+ const el=document.getElementById(id)
 
- let lastWin = 0
- let lastLose = 0
+ el.classList.remove("bump")
+ void el.offsetWidth
+ el.classList.add("bump")
 
- function bump(id){
+}
 
-  const el = document.getElementById(id)
+function showFloat(type,value){
 
-  el.classList.remove("bump")
-  void el.offsetWidth
-  el.classList.add("bump")
+ const container=document.querySelector("."+type)
 
+ const el=document.createElement("div")
+
+ el.className="float "+type
+
+ el.innerText=value>0? "+"+value : value
+
+ container.appendChild(el)
+
+ setTimeout(()=>{
+  el.remove()
+ },1000)
+
+}
+
+async function connect(){
+
+ const config=await fetch("/config").then(r=>r.json())
+
+ ws=new WebSocket(config.ws)
+
+ console.log("WS connecting...")
+
+ ws.onopen=()=>{
+  console.log("WS connected")
  }
 
- function showFloat(type,value){
+ ws.onmessage=(event)=>{
 
-  const container = document.querySelector("." + type)
+  const data=JSON.parse(event.data)
 
-  const el = document.createElement("div")
+  document.getElementById("date").innerText="📅 "+data.date
 
-  el.className="float "+type
-
-  if(value>0)
-  el.innerText="+"+value
-  else
-  el.innerText=value
-
-  container.appendChild(el)
-
-  setTimeout(()=>{
-   el.remove()
-  },1000)
-
- }
-
- ws.onmessage = (event)=>{
-
-  const data = JSON.parse(event.data)
-
-  const dateEl = document.getElementById("date")
-  const winEl = document.getElementById("win")
-  const loseEl = document.getElementById("lose")
-
-  dateEl.innerText="📅 "+data.date
-
-  if(data.win !== lastWin){
+  if(data.win!==lastWin){
 
    const diff=data.win-lastWin
 
-   winEl.innerText=data.win
-   bump("win")
+   document.getElementById("win").innerText=data.win
 
+   bump("win")
    showFloat("win",diff)
 
    lastWin=data.win
-
   }
 
-  if(data.lose !== lastLose){
+  if(data.lose!==lastLose){
 
    const diff=data.lose-lastLose
 
-   loseEl.innerText=data.lose
-   bump("lose")
+   document.getElementById("lose").innerText=data.lose
 
+   bump("lose")
    showFloat("lose",diff)
 
    lastLose=data.lose
-
   }
 
+ }
+
+ ws.onclose=()=>{
+  console.log("WS disconnected reconnecting...")
+  setTimeout(connect,3000)
+ }
+
+ ws.onerror=()=>{
+  ws.close()
  }
 
 }
 
-start()
+connect()
 
 </script>
 
